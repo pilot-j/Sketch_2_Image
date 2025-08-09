@@ -19,6 +19,7 @@ Gradio App deployed on Hugging Face Spaces -[Sketch_2_Img](https://huggingface.c
 Integrating custom weights right now (facing issue with LoRA adapters) — work in progress.
 
 ### How to Reproduce Results
+Please use kaggle to run notebooks as data sources are uploaded there. If you face any issue please feel free to contact.
 - Trained weights - [controlnet_lora_finetuned](https://www.kaggle.com/datasets/mldtype/lora-weights-full) , use lora_v1 with num_inference_steps <=50.
 - Training dataset  - [sketch_2_image](https://www.kaggle.com/datasets/mldtype/sketch-2-image-dataset)
 - Training and inference Jupyter notebooks are provided.  
@@ -129,6 +130,7 @@ where `K` will be a hyper parameter (~0.1). The number of rectangles is directly
 ## TODOs
 
 - [ ] Write function to directly inject LoRA adapters into model layers (due to naming conflicts current method requires full model instantiation)
+- [ ] Rewrite inference pipeline - unoptimised
 - [ ] Create a HF model for custom checkpoint and fix gradio "generation" error (unable to initialise from finetuned wts).
 - [ ] Create YAML config for training loop
 - [ ] Enable WandB tracking
