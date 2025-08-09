@@ -1,5 +1,7 @@
 # Sketch_2_Image
-Helps you convert architecture sketches to realistic images - based on stable diffusion
+Helps you convert architecture sketches to realistic images - based on stable diffusion.
+
+_Note - Debugging gradio app issue. Unable to load finetuned weights directly._
 
 Generations on given sample
 <img width="985" height="292" alt="image" src="https://github.com/user-attachments/assets/10683e32-b99c-460b-be64-a56bbc657949" />
@@ -96,6 +98,41 @@ where `K` will be a hyper parameter (~0.1). The number of rectangles is directly
 
 </details>
 
+---
+
+<details><summary><strong>Current Problems and way to v2</strong></summary>
+
+1. **Sensitivity to `num_inference_steps`** : Generation quality and consistency vary significantly across image categories. Emperical observation - It is related to sketch qualtiy and complexity. Unpredictable behavior makes it difficult to generalize the number of steps needed.
+
+2.  **Poor performance without guidance prompt** : Model relies heavily on guidance prompts. Indicates the need for a larger and more diverse training dataset.
+
+3. **Sketch background introduces noise** : Background elements degrade model understanding of the core sketch. This impacts both generation quality and training signal.
+
+### Proposed Way Forward
+
+1. **Remove sketch background** before feeding into the model.
+2. **Incorporate edge loss** term during training to enforce structural alignment.
+3. **Use ResNet to encode sketch + edge map**
+   - Feed both sketch and its edge map through ResNet layers (multi - controlNet)
+   - Finetune first few ResNet layers alongside LoRA.
+4. **Introduce material-based color/texture maps**
+   - Fixed set of maps based on material and texture. Will be fused with initial input. Provide richer guidance for surface properties.
+5. **Use multiple randomized prompts per training sample**
+   - Replaces current fixed prompts.
+   - Reduces overfitting to specific prompt wording.
+   - Encourages the model to learn from image maps (e.g., edges, texture) rather than relying heavily on text.
+6. **Evaluate model using LPIPS**
+
+</details>
+
+---
+## TODOs
+
+- [ ] Write function to directly inject LoRA adapters into model layers (due to naming conflicts current method requires full model instantiation)
+- [ ] Create a HF model for custom checkpoint and fix gradio "generation" error (unable to initialise from finetuned wts).
+- [ ] Create YAML config for training loop
+- [ ] Enable WandB tracking
+- [ ] Enable batch-wise validation during training
 
 
 
