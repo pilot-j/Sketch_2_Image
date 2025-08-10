@@ -14,9 +14,7 @@ Example generations on training samples
 
 
 # Resources
-Gradio App deployed on Hugging Face Spaces -[Sketch_2_Img](https://huggingface.co/spaces/pilotj/sketch_2_img)
-
-Integrating custom weights right now (facing issue with LoRA adapters) — work in progress.
+Gradio App deployed on Hugging Face Spaces -[Sketch_2_Img](https://huggingface.co/spaces/pilotj/sketch_2_img). Please wait for ~700 sec for the generation.
 
 ### How to Reproduce Results
 Please use kaggle to run notebooks as data sources are uploaded there. If you face any issue please feel free to contact.
@@ -129,9 +127,9 @@ where `K` will be a hyper parameter (~0.1). The number of rectangles is directly
 ---
 ## TODOs
 
-- [ ] Write function to directly inject LoRA adapters into model layers (due to naming conflicts current method requires full model instantiation)
-- [ ] Rewrite inference pipeline - unoptimised
-- [ ] Create a HF model for custom checkpoint and fix gradio "generation" error (unable to initialise from finetuned wts).
+- [x] Write function to directly inject LoRA adapters into model layers (due to naming conflicts current method requires full model instantiation)
+- [x] Rewrite inference pipeline - unoptimised
+- [X] Fix gradio "generation" error (unable to initialise from finetuned wts).
 - [ ] Create YAML config for training loop
 - [ ] Enable WandB tracking
 - [ ] Enable batch-wise validation during training
