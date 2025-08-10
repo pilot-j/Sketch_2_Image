@@ -1,0 +1,12 @@
+#Update to the latest versions
+
+torch
+torchvision
+numpy
+opencv-python
+pandas
+matplotlib
+Pillow
+imageio
+transformers
+diffusers
