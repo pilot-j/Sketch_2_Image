@@ -1,8 +1,6 @@
 # Sketch_2_Image
 Helps you convert architecture sketches to realistic images - based on stable diffusion.
 
-_Note - Debugging gradio app issue. Current generations are noisy there because script is unable to load finetuned weights. The weights are getting initialised randomly._
-
 Generations on given sample
 <img width="985" height="292" alt="image" src="https://github.com/user-attachments/assets/10683e32-b99c-460b-be64-a56bbc657949" />
 
