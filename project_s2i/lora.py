@@ -153,3 +153,10 @@ def inject_lora_adapter(model: nn.Module, lora_path: str, device: torch.device):
     if unexpected:
         print(f"[WARNING] Unexpected keys in LoRA state dict: {unexpected}")
 
+def setup_lora(controlnet, lora_path, lora_rank, device, dtype):
+    # Replace attention linear layers with LoRA versions
+    _ = init_lora_attn(controlnet, lora_rank=lora_rank)
+    controlnet.to(device, dtype=dtype)
+
+    # Load LoRA weights
+    inject_lora_adapter(controlnet, lora_path, device)
