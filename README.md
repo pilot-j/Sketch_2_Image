@@ -14,9 +14,13 @@ Example generations on training samples
 # Resources
 Gradio App deployed on Hugging Face Spaces -[Sketch_2_Img](https://huggingface.co/spaces/pilotj/sketch_2_img). Please wait for ~700 sec for the generation.
 
+[![Demo](https://img.shields.io/badge/🤗%20Hugging%20Face%20Space-Sketch2Img-blue)](https://huggingface.co/spaces/pilotj/sketch_2_img)
+
+
+
 ### How to Reproduce Results
 Please use kaggle to run notebooks as data sources are uploaded there. If you face any issue please feel free to contact.
-- Trained weights - [controlnet_lora_finetuned](https://www.kaggle.com/datasets/mldtype/lora-weights-full) , use lora_v1 with num_inference_steps <=50.
+- Trained weights - [controlnet_lora_finetuned](https://www.kaggle.com/datasets/mldtype/lora-weights-full) , use lora_v2 with num_inference_steps <=50.
 - Training dataset  - [sketch_2_image](https://www.kaggle.com/datasets/mldtype/sketch-2-image-dataset)
 - Training and inference Jupyter notebooks are provided.  
 
