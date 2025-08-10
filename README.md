@@ -2,6 +2,9 @@
 
 [![Demo](https://img.shields.io/badge/🤗%20Hugging%20Face%20Space-Sketch2Img-blue)](https://huggingface.co/spaces/pilotj/sketch_2_img)
 
+
+
+
 Helps you convert architecture sketches to realistic images - based on stable diffusion.
 
 Generations on given sample
@@ -11,7 +14,7 @@ Generations on given sample
 Example generations on training samples
 <img width="865" height="446" alt="image" src="https://github.com/user-attachments/assets/3af0a04d-f6c2-4703-a420-ef6d0bb26af3" />
 
-
+_Note: Trying some hyperparam tuning and improvements (read below)_
 
 
 # Resources
