@@ -1,4 +1,7 @@
 # Sketch_2_Image
+
+[![Demo](https://img.shields.io/badge/🤗%20Hugging%20Face%20Space-Sketch2Img-blue)](https://huggingface.co/spaces/pilotj/sketch_2_img)
+
 Helps you convert architecture sketches to realistic images - based on stable diffusion.
 
 Generations on given sample
@@ -14,7 +17,6 @@ Example generations on training samples
 # Resources
 Gradio App deployed on Hugging Face Spaces -[Sketch_2_Img](https://huggingface.co/spaces/pilotj/sketch_2_img). Please wait for ~700 sec for the generation.
 
-[![Demo](https://img.shields.io/badge/🤗%20Hugging%20Face%20Space-Sketch2Img-blue)](https://huggingface.co/spaces/pilotj/sketch_2_img)
 
 
 
