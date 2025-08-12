@@ -66,20 +66,78 @@ For v1, no augmentations were applied apart from these text prompts. I experimen
 ---
 
 <details>
-<summary><strong>Model & Methodology Details</strong></summary>
+<summary><strong>Update [12/08/25] – Method used is not exactly LoRA</strong></summary>
+ 
 
+While reviewing my training code, I discovered that I had **not** actually used conventional LoRA as initially intended. My implmentation is slightly different and has infact produced better outcome.
+
+LoRALinear returns _W₀ + ΔW₀_, where: _W₀_ is the original matrix (usually kept frozen), _ΔW₀_ is the required weight update, provided by two low-rank matrices (A, B). Normally,  **only ΔW₀** is trainable, since it’s the product of newly initialized matrices _A_ and _B_ (new `nn.Parameter` tensors in PyTorch are trainable unless you disable their gradients).
+
+However, I spotted an anomaly in my implementation:  
+ I explicitly set `requires_grad = True` for `lora_layers` at the end of the `init_lora_layers` function, due to which **both** W₀ and ΔW₀ were being trained.
+
+
+
+`def init_lora_attn(model, lora_rank=4, alpha=1.0):`
+    
+    lora_layers = {}
+    # Freeze all original parameters first
+    for param in model.parameters():
+        param.requires_grad = False
+    for name, module in model.named_modules():
+        if name.endswith("attn1") or name.endswith("attn2"):
+            attn = module
+
+            # Replace and register LoRA for to_q, to_k, to_v
+            for proj_name in ['to_q', 'to_k', 'to_v']:
+                orig_layer = getattr(attn, proj_name)
+                lora_layer = LoRALinear(orig_layer, rank=lora_rank, alpha=alpha)
+                setattr(attn, proj_name, lora_layer)
+                lora_layers[f"{name}.{proj_name}"] = lora_layer
+
+            # to_out usually ModuleList or Sequential, replace first layer
+            if isinstance(attn.to_out, (nn.ModuleList, nn.Sequential)):
+                orig_out = attn.to_out[0]
+                lora_out = LoRALinear(orig_out, rank=lora_rank, alpha=alpha)
+                attn.to_out[0] = lora_out
+                lora_layers[f"{name}.to_out.0"] = lora_out
+
+    # Unfreeze all LoRA parameters only   ----> this part
+    for lora_layer in lora_layers.values():
+        for param in lora_layer.parameters():
+            param.requires_grad = True
+
+    return lora_layers
+
+  For proper LoRA fine-tuning I should have trained **only ΔW₀**, keep **W₀** frozen. That means the highlighted part should be removed.
+
+  I retried the experiment with conventional LoRA fine-tuning, but results were underwhelming(artificial looking) 
+  <img width="650" height="400" alt="image" src="https://github.com/user-attachments/assets/dd109978-d400-42e7-bc81-8b32b140c08a" />
+
+  **Why did the modified method work for us**  
+  - When training **W₀ + ΔW₀** for the first few epochs, W₀ adapts significantly to the target generation style (pure LoRA generations tend to look more “artificial”).
+  - In later epochs, ΔW₀ captures finer details with almost no updates to W0
+
+  So, this unintentional 'mistake' worked in my favour. This is the primary method used to produce reported results. In the following sections, this method is referred to as **_modified LoRA_**. The reported results are correct, just wanted to clarify this bit.
+  </details>
+
+-----
+
+<details>
+<summary><strong>Model & Methodology Details</strong></summary>
+   
 *Method described here is v1 due to time and compute constraints. Possible extensions and better approaches are also discussed.*
 
 As a baseline, Stable Diffusion was tested both with and without text conditioning. In these trials, many outputs degenerated into random noise, while a few managed to produce basic outlines with some color. However, these results proved to be highly sensitive to the specific prompt used.
 
-Our objective is to perform inpainting as well as capture structure details. Since structural consistency is a need, I chose to go with ControlNet (Canny Edge version). ControlNet takes as input the edge map of a provided image and generates a realistic colored image. In our case, the base version of ControlNet could just produce outlines — this is because architecture sketches have multiple pencil strokes and shades to capture not only the structure but also depth and exposure to the light source. Edge maps are mostly binary and have almost no explicit indication of depth or natural light (pixel intensity sometimes captures light information). Due to compute constraints, I chose to go with a 300M parameter base model of ControlNet. I created a custom dataset of 35 images with guiding prompts. I used LoRA to finetune the model.
+Our objective is to perform inpainting as well as capture structure details. Since structural consistency is a need, I chose to go with ControlNet (Canny Edge version). ControlNet takes as input the edge map of a provided image and generates a realistic colored image. In our case, the base version of ControlNet could just produce outlines — this is because architecture sketches have multiple pencil strokes and shades to capture not only the structure but also depth and exposure to the light source. Edge maps are mostly binary and have almost no explicit indication of depth or natural light (pixel intensity sometimes captures light information). Due to compute constraints, I chose to go with a 300M parameter base model of ControlNet. I created a custom dataset of 35 images with guiding prompts. I used _modified LoRA_ to finetune the model.
 
 **Challenge** — Initially I started with Hugging Face's diffusers library to use LoRA; however, a lot of their functions are now deprecated (documentation not updated) and some are under upgradation (discovered this by reading their source code). For ControlNet from a custom checkpoint, there was no direct method — hence I decided to implement custom LoRA and generation pipeline. MSE was used as a loss. 
 
 **Setups tried** —  
-- LoRA with rank 4 (weak details) — 40M params  
-- LoRA with rank 256 (most cost effective) — 60M params  
-- LoRA with rank 512 (most detailed) — 90M params  
+- _modified LoRA_ with rank 4 (weak details) — 40M params  
+- _modified LoRA_ with rank 256 (most cost effective) — 60M params  
+- _modified LoRA_ with rank 512 (most detailed) — 90M params  
 
 It was seen that text conditioning hugely improves generation quality. So the final training happens for `{sketch, prompt}` pairs. We use small prompts with a semi defined structure as discussed above. Best model was decided among a set of models with low loss and good visually aligned generation of provided validation images.
 
@@ -113,6 +171,12 @@ where `K` will be a hyper parameter (~0.1). The number of rectangles is directly
 2.  **Poor performance without guidance prompt** : Model relies heavily on guidance prompts. Indicates the need for a larger and more diverse training dataset.
 
 3. **Sketch background introduces noise** : Background elements degrade model understanding of the core sketch. This impacts both generation quality and training signal.
+4. **Unable to detect balconies** : Our method fails to generate balconies. Pure LoRA is able to produce balcony outlines (see samples below) but is unable to generate good images.
+   
+   <img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/b640622a-e4af-4ef8-ab23-ff8151aa4dba" /><img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/0405ff91-a782-43e2-8b87-d56d740af339" /><img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/0a22e3e6-b3e8-4b8a-9c1e-2802c43bdbbe" />
+
+
+
 
 ### Proposed Way Forward
 
@@ -127,7 +191,8 @@ where `K` will be a hyper parameter (~0.1). The number of rectangles is directly
    - Replaces current fixed prompts.
    - Reduces overfitting to specific prompt wording.
    - Encourages the model to learn from image maps (e.g., edges, texture) rather than relying heavily on text.
-6. **Evaluate model using LPIPS**
+6. **Use two step finetuning**. Start with current model (_modified LoRA_) and finetune it using conventional LoRA. We should be able to generate finer structure like glass balconies then.
+7. **Evaluate model using LPIPS**
 
 </details>
 
