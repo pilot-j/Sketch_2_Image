@@ -18,21 +18,13 @@ def run_controlnet_inference(
     vae,
     unet,
     controlnet,
-    wts_path=None,
     num_inference_steps=50,
     guidance_scale=7.5,
     device=None,
-    weight_dtype=torch.float32,
-    inject_lora=True,
+    weight_dtype=torch.float32
 ):
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Inject LoRA
-    if inject_lora:
-        lora_layers = init_lora_attn(controlnet)
-        if wts_path:
-            state_dict = torch.load(wts_path, map_location="cpu")
-            controlnet.load_state_dict(state_dict, strict=False)
 
     cond_embeds = encode_prompt(prompt, tokenizer, text_encoder, device)
     uncond_embeds = encode_prompt("", tokenizer, text_encoder, device)
