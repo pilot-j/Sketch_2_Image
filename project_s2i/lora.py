@@ -108,6 +108,11 @@ def init_lora_attn(model: nn.Module, lora_rank: int = 512, alpha: float = 1.0) -
                 attn.to_out[0] = lora_out
                 lora_layers.append(lora_out)
 
+            #Unfreezes both W0 and del W0
+    for lora_layer in lora_layers.values():
+        for param in lora_layer.parameters():
+            param.requires_grad = True
+
     return lora_layers
 
 def inject_lora_adapter(model: nn.Module, lora_path: str, device: torch.device):
