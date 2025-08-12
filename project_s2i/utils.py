@@ -131,3 +131,21 @@ def show_images_side_by_side(images, titles=None):
         if titles is not None:
             axs[i].set_title(titles[i])
     plt.show()
+
+def load_config(path="config.yaml"):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+
+def create_optimizer(cfg, lora_layers):
+    opt_type = cfg["optimizer"]["type"]
+    opt_params = cfg["optimizer"]["params"]
+
+    if not hasattr(torch.optim, opt_type):
+        raise ValueError(f"Unknown optimizer type: {opt_type}")
+    opt_class = getattr(torch.optim, opt_type)
+
+    return opt_class(
+        [p for layer in lora_layers for p in layer.parameters() if p.requires_grad],
+        **opt_params
+    )
