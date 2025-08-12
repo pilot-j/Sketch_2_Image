@@ -54,3 +54,45 @@ def init_lora_attn(model, lora_rank=256, alpha=1.0, train=False):
                 param.requires_grad = True
 
     return lora_layers
+
+
+def inject_lora_adapter(model: nn.Module, lora_path: str, device: torch.device):
+    """
+    Load LoRA adapter weights into a model that has already been wrapped
+    with LoRALinear layers using `init_lora_attn()`.
+    Args:
+        model (nn.Module): Model with LoRALinear layers already injected.
+        lora_path (str): Path to the saved LoRA weights (.pth or .bin).
+        device (torch.device): Target device for the weights.
+    Raises:
+        RuntimeError: If no LoRALinear layers are found in the model.
+    """
+    # Collect all LoRALinear layer names
+    lora_layer_names = [
+        name for name, module in model.named_modules()
+        if isinstance(module, LoRALinear)
+    ]
+
+    if not lora_layer_names:
+        raise RuntimeError("No LoRALinear layers found. Did you run init_lora_attn()?")
+
+    # Load saved LoRA state dict
+    lora_state_dict = torch.load(lora_path, map_location=device)
+
+    # Filter out keys that match LoRALinear parameters
+    filtered_state_dict = {
+        k: v for k, v in lora_state_dict.items()
+        if any(layer_name in k for layer_name in lora_layer_names)
+    }
+
+    if not filtered_state_dict:
+        raise RuntimeError(f"No matching LoRA parameters found in {lora_path}")
+
+    # Load LoRA weights (non-strict to avoid missing base weights)
+    missing, unexpected = model.load_state_dict(filtered_state_dict, strict=False)
+
+    print(f"[INFO] Loaded LoRA weights from {lora_path}")
+    if missing:
+        print(f"[WARNING] Missing keys (likely frozen base weights): {missing}")
+    if unexpected:
+        print(f"[WARNING] Unexpected keys in LoRA state dict: {unexpected}")
