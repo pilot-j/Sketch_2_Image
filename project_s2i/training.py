@@ -3,46 +3,6 @@
 Training script for ControlNet with Modified LoRA.
 """
 
-import os
-import math
-import torch
-import torch.nn.functional as F
-import numpy as np
-from tqdm import tqdm
-from torch.utils.data import random_split
-from torchvision import transforms
-from diffusers import (
-    DDIMScheduler,
-    AutoencoderKL,
-    UNet2DConditionModel,
-    ControlNetModel
-)
-from transformers import CLIPTokenizer, CLIPTextModel
-from diffusers.optimization import get_scheduler
-from dataset import LoRADataset
-from lora import  init_lora_attn, get_input
-from utils import run_controlnet_inference, show_image, show_images_side_by_side
-
-#Config
-pretrained_model_path = "runwayml/stable-diffusion-v1-5"
-controlnet_model_path = "lllyasviel/sd-controlnet-canny"
-data_root = "/kaggle/input/sketch-2-image-dataset/construction_sketch_dataset/construction_sketch_dataset"
-train_batch_size = 4
-learning_rate = 1e-4
-adam_beta1, adam_beta2 = 0.9, 0.999
-adam_weight_decay = 1e-2
-adam_epsilon = 1e-8
-lora_rank = 512
-gradient_accumulation_steps = 2
-max_train_steps = 10000
-lr_warmup_steps = 500
-max_grad_norm = 1.0
-fixed_image = "/kaggle/input/val-image/whereness assignment sketch.png"
-seed = 42
-save_loss_threshold = 0.09888
-torch.manual_seed(seed)
-np.random.seed(seed)
-
 import torch
 import math
 import yaml
